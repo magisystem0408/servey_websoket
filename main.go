@@ -1,16 +1,54 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"log"
-	"webSocket_dev/routes"
+	"net/http"
 )
 
-func main() {
-	app := gin.Default()
-	routes.Setup(app)
+//書き込み読み込みのバッファサイズを定義
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
 
-	if err := app.Run(":5000"); err != nil {
-		log.Fatalln(err.Error())
+func homePage(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w,r,"index.html")
+}
+
+func reader(conn *websocket.Conn) {
+	for {
+		messageType, p, err := conn.ReadMessage()
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		log.Println(string(p))
+
+		if err := conn.WriteMessage(messageType, p);err != nil {
+			log.Println(err)
+			return
+		}
 	}
+}
+
+func wsEndpoint(w http.ResponseWriter, r *http.Request) {
+	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+
+	ws, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println(err)
+	}
+	log.Println("Client Successfuly Connected")
+	reader(ws)
+}
+
+func setupRoutes() {
+	http.HandleFunc("/", homePage)
+	http.HandleFunc("/ws", wsEndpoint)
+}
+
+func main() {
+	setupRoutes()
+	log.Fatal(http.ListenAndServe(":8000", nil))
 }

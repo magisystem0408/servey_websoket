@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+<h1>Hello mamushi</h1>
+<form id="textbox">
+    <textarea id="tex"></textarea>
+    <input type="submit" value="送信">
+</form>
+
+<ul id="msg"></ul>
+s
+
+<script>
+    let socket = new WebSocket("ws://localhost:8000/ws")
+    console.log("Attempting websocket Connection")
+    console.log(socket)
+
+    let textbox = document.querySelector("#textbox")
+    textbox.addEventListener("submit", (e) => {
+        socket.send(textbox.tex.value)
+        textbox.tex.value = ""
+        event.preventDefault()
+    })
+
+    socket.onopen = () => {
+        console.log("Successfully Connected")
+    }
+
+    socket.onmessage = (e) => {
+        const li =document.createElement("li")
+        li.textContent =e.data
+        msg.append(li)
+    }
+
+    socket.onclose = (e) => {
+        console.log("Socket Closed Connection:", e)
+    }
+
+    socket.onerror = (e) => {
+        console.log("Socket Error：", e)
+    }
+
+
+</script>
+
+</body>
+</html>
